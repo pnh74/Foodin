@@ -1,0 +1,7 @@
+{
+  "name": "Foodin",
+  "description": "A next-generation culinary decision engine for Vietnam using AI and Tri-Keywords.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

@@ -2,15 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MOCK_VIDEOS } from '../constants';
 import { Heart, X, MapPin, Share2, Bookmark } from 'lucide-react';
 
-const DiscoverySwipe: React.FC = () => {
+interface DiscoverySwipeProps {
+  onAction: (type: 'like' | 'save' | 'comment', targetId: string) => boolean;
+}
+
+const DiscoverySwipe: React.FC<DiscoverySwipeProps> = ({ onAction }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const startX = useRef(0);
 
-  const currentVideo = MOCK_VIDEOS[currentIndex];
-  const nextVideo = MOCK_VIDEOS[currentIndex + 1];
+  const currentVideo = MOCK_VIDEOS[currentIndex % MOCK_VIDEOS.length];
+  const nextVideo = MOCK_VIDEOS[(currentIndex + 1) % MOCK_VIDEOS.length];
 
   const handleStart = (clientX: number) => {
     isDragging.current = true;
@@ -24,20 +27,21 @@ const DiscoverySwipe: React.FC = () => {
   };
 
   const handleEnd = () => {
+    if (!isDragging.current) return;
     isDragging.current = false;
-    const threshold = 100; // px to trigger swipe
+    const threshold = 100;
 
     if (Math.abs(dragX) > threshold) {
-      // Swipe triggered
-      const direction = dragX > 0 ? 1 : -1; // 1 = right (like), -1 = left (pass)
-      
-      // Animate out
-      // In a real app, use a library for smooth exit animations. 
-      // Here we just jump to next index after a brief delay for simplicity in code generation.
-      setCurrentIndex((prev) => (prev + 1) % MOCK_VIDEOS.length);
+      // Swipe logic
+      setCurrentIndex((prev) => prev + 1);
     }
     
     setDragX(0);
+  };
+
+  // Protective actions wrapper
+  const handleInteraction = (type: 'like' | 'save' | 'comment') => {
+    onAction(type, currentVideo.restaurant.id);
   };
 
   // Mouse Events
@@ -50,9 +54,8 @@ const DiscoverySwipe: React.FC = () => {
   const onTouchMove = (e: React.TouchEvent) => handleMove(e.touches[0].clientX);
   const onTouchEnd = () => handleEnd();
 
-  if (!currentVideo) return <div className="h-full flex items-center justify-center text-white">No more suggestions!</div>;
+  if (!currentVideo) return <div className="h-full flex items-center justify-center text-white">Loading...</div>;
 
-  // Calculate rotation and opacity based on drag
   const rotation = dragX * 0.05;
   const likeOpacity = Math.max(0, dragX / 200);
   const nopeOpacity = Math.max(0, -dragX / 200);
@@ -60,16 +63,13 @@ const DiscoverySwipe: React.FC = () => {
   return (
     <div className="relative w-full h-full bg-black overflow-hidden select-none">
       
-      {/* Background/Next Card (Preloader) */}
       {nextVideo && (
         <div className="absolute inset-0 z-0 transform scale-95 opacity-50">
            <img src={nextVideo.url} className="w-full h-full object-cover" alt="" />
         </div>
       )}
 
-      {/* Active Card */}
       <div 
-        ref={containerRef}
         className="absolute inset-0 z-10 origin-bottom transition-transform duration-75 ease-linear cursor-grab active:cursor-grabbing"
         style={{ transform: `translateX(${dragX}px) rotate(${rotation}deg)` }}
         onMouseDown={onMouseDown}
@@ -87,18 +87,15 @@ const DiscoverySwipe: React.FC = () => {
           draggable={false}
         />
         
-        {/* Overlays */}
         <div className="absolute inset-0 bg-black/20 pointer-events-none" />
-        <div className="absolute top-10 left-10 p-4 border-4 border-green-500 rounded-xl transform -rotate-12 opacity-0" style={{ opacity: likeOpacity }}>
-           <span className="text-4xl font-bold text-green-500 uppercase tracking-widest">Yum</span>
+        <div className="absolute top-10 left-10 p-4 border-4 border-green-500 rounded-xl transform -rotate-12 pointer-events-none" style={{ opacity: likeOpacity }}>
+           <span className="text-4xl font-bold text-green-500 uppercase tracking-widest font-sans">Like</span>
         </div>
-        <div className="absolute top-10 right-10 p-4 border-4 border-red-500 rounded-xl transform rotate-12 opacity-0" style={{ opacity: nopeOpacity }}>
-           <span className="text-4xl font-bold text-red-500 uppercase tracking-widest">Nah</span>
+        <div className="absolute top-10 right-10 p-4 border-4 border-red-500 rounded-xl transform rotate-12 pointer-events-none" style={{ opacity: nopeOpacity }}>
+           <span className="text-4xl font-bold text-red-500 uppercase tracking-widest font-sans">Pass</span>
         </div>
 
-        {/* Info Overlay (Bottom Gradient) */}
         <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6 flex flex-col justify-end pointer-events-none">
-          
           <div className="mb-20">
             <h2 className="text-3xl font-serif font-bold text-white mb-2 drop-shadow-md">
               {currentVideo.restaurant.name}
@@ -124,15 +121,24 @@ const DiscoverySwipe: React.FC = () => {
           </div>
         </div>
 
-        {/* Action Buttons (Right) - Needs pointer-events-auto */}
+        {/* Action Buttons (Right) */}
         <div className="absolute right-4 bottom-24 flex flex-col space-y-4 pointer-events-auto">
-           <button className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+           <button 
+             onClick={() => handleInteraction('like')}
+             className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-all active:scale-90"
+           >
               <Heart className="w-6 h-6" />
            </button>
-           <button className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+           <button 
+             onClick={() => handleInteraction('save')}
+             className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-all active:scale-90"
+           >
               <Bookmark className="w-6 h-6" />
            </button>
-           <button className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+           <button 
+             onClick={() => handleInteraction('comment')}
+             className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-all active:scale-90"
+           >
               <Share2 className="w-6 h-6" />
            </button>
         </div>

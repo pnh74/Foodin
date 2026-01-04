@@ -1,3 +1,12 @@
+export interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  isTrusted: boolean;
+  savedRestaurants: string[];
+  likedPosts: string[];
+}
+
 export interface Restaurant {
   id: string;
   name: string;
@@ -30,7 +39,7 @@ export interface Post {
 
 export interface VideoItem {
   id: string;
-  url: string; // Use image placeholder for demo stability
+  url: string;
   restaurant: Restaurant;
   user: {
     name: string;
@@ -39,3 +48,8 @@ export interface VideoItem {
 }
 
 export type ViewState = 'home' | 'discovery' | 'saved' | 'profile';
+
+export type UserIntent = {
+  type: 'like' | 'save' | 'comment';
+  targetId: string;
+} | null;

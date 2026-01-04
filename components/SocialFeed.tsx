@@ -2,11 +2,15 @@ import React from 'react';
 import { MOCK_POSTS } from '../constants';
 import { Heart, MessageCircle, Share, Bookmark, CheckCircle2 } from 'lucide-react';
 
-const SocialFeed: React.FC = () => {
+interface SocialFeedProps {
+  onAction: (type: 'like' | 'save' | 'comment', targetId: string) => boolean;
+}
+
+const SocialFeed: React.FC<SocialFeedProps> = ({ onAction }) => {
   return (
-    <div className="space-y-4 pb-20">
+    <div className="space-y-4 pb-24">
       {MOCK_POSTS.map((post) => (
-        <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 animate-in fade-in duration-500">
           <div className="flex space-x-3">
             <img 
               src={post.user.avatar} 
@@ -33,24 +37,33 @@ const SocialFeed: React.FC = () => {
               )}
 
               {post.image && (
-                <div className="rounded-lg overflow-hidden mb-3">
+                <div className="rounded-2xl overflow-hidden mb-3 shadow-sm border border-gray-100">
                   <img src={post.image} alt="Post content" className="w-full h-auto object-cover max-h-64" />
                 </div>
               )}
 
               <div className="flex items-center justify-between text-gray-400 pt-2">
-                <button className="flex items-center gap-1 hover:text-red-500 transition-colors group">
+                <button 
+                  onClick={() => onAction('like', post.id)}
+                  className="flex items-center gap-1 hover:text-red-500 transition-colors group"
+                >
                   <Heart className="w-4 h-4 group-hover:fill-red-500" />
-                  <span className="text-xs">{post.likes}</span>
+                  <span className="text-xs font-medium">{post.likes}</span>
                 </button>
-                <button className="flex items-center gap-1 hover:text-blue-500 transition-colors">
+                <button 
+                  onClick={() => onAction('comment', post.id)}
+                  className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+                >
                   <MessageCircle className="w-4 h-4" />
-                  <span className="text-xs">{post.comments}</span>
+                  <span className="text-xs font-medium">{post.comments}</span>
                 </button>
                 <button className="flex items-center gap-1 hover:text-green-500 transition-colors">
                   <Share className="w-4 h-4" />
                 </button>
-                <button className="flex items-center gap-1 hover:text-foodin-orange transition-colors">
+                <button 
+                  onClick={() => onAction('save', post.id)}
+                  className="flex items-center gap-1 hover:text-foodin-orange transition-colors"
+                >
                   <Bookmark className="w-4 h-4" />
                 </button>
               </div>

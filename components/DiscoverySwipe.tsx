@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { MOCK_VIDEOS } from '../constants';
-import { Heart, X, MapPin, Share2, Bookmark } from 'lucide-react';
+import { Heart, MapPin, Share2, Bookmark } from 'lucide-react';
 
 interface DiscoverySwipeProps {
   onAction: (type: 'like' | 'save' | 'comment', targetId: string) => boolean;
@@ -32,16 +32,15 @@ const DiscoverySwipe: React.FC<DiscoverySwipeProps> = ({ onAction }) => {
     const threshold = 100;
 
     if (Math.abs(dragX) > threshold) {
-      // Swipe logic
+      if (dragX > 0) handleInteraction('like');
       setCurrentIndex((prev) => prev + 1);
     }
     
     setDragX(0);
   };
 
-  // Protective actions wrapper
   const handleInteraction = (type: 'like' | 'save' | 'comment') => {
-    onAction(type, currentVideo.restaurant.id);
+    return onAction(type, currentVideo.restaurant.id);
   };
 
   // Mouse Events
@@ -54,7 +53,7 @@ const DiscoverySwipe: React.FC<DiscoverySwipeProps> = ({ onAction }) => {
   const onTouchMove = (e: React.TouchEvent) => handleMove(e.touches[0].clientX);
   const onTouchEnd = () => handleEnd();
 
-  if (!currentVideo) return <div className="h-full flex items-center justify-center text-white">Loading...</div>;
+  if (!currentVideo) return <div className="h-full flex items-center justify-center text-white font-sans">Loading...</div>;
 
   const rotation = dragX * 0.05;
   const likeOpacity = Math.max(0, dragX / 200);
@@ -70,7 +69,7 @@ const DiscoverySwipe: React.FC<DiscoverySwipeProps> = ({ onAction }) => {
       )}
 
       <div 
-        className="absolute inset-0 z-10 origin-bottom transition-transform duration-75 ease-linear cursor-grab active:cursor-grabbing"
+        className={`absolute inset-0 z-10 origin-bottom ${!isDragging.current ? 'transition-transform duration-300 ease-out' : ''} cursor-grab active:cursor-grabbing`}
         style={{ transform: `translateX(${dragX}px) rotate(${rotation}deg)` }}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
